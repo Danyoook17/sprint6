@@ -7,14 +7,17 @@ import (
 )
 
 func main() {
-	// Создаем логгер
+	// Создаем новый логгер
 	logger := log.New(log.Writer(), "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// Создаем сервер
-	srv := server.NewServer(logger)
-	
+	// Создаем новый сервер
+	server := server.NewServer(logger)
+
+	// Логируем сообщение о старте сервера
+	server.Logger.Println("Starting server on", server.HTTPServer.Addr)
+
 	// Запускаем сервер
-	if err := srv.Server.ListenAndServe(); err != nil {
-		srv.Logger.Fatal("ListenAndServe:", err)
+	if err := server.HTTPServer.ListenAndServe(); err != nil {
+		server.Logger.Fatal("ListenAndServe:", err)
 	}
 }

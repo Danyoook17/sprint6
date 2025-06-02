@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"strings"
-
 )
 
 var morseCodeMap = map[rune]string{
@@ -65,19 +64,16 @@ func ToText(morse string) string {
 	return strings.TrimSpace(string(text))
 }
 
-
-
-
-func Convert(input string) (string, error) {
-	if len(input) == 0 {
+func Convert(sm string) (string, error) {
+	if len(sm) == 0 {
 		return "", errors.New("empty string")
 	}
 	var res string
-	for _, char := range input {
-		if !strings.ContainsAny(string(char), ".- ") {
-			res = ToMorse(input)
+	for _, ch := range sm {
+		if ch != '.' && ch != '-' && ch != ' ' {
+			res = ToMorse(sm)
 		} else {
-			res = ToText(input)
+			res = ToText(sm)
 		}
 	}
 	return res, nil

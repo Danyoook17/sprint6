@@ -8,33 +8,31 @@ import (
 	"github.com/Yandex-Practicum/go1fl-sprint6-final/internal/handlers"
 )
 
-// Структура сервера
 type Server struct {
-	Logger *log.Logger
-	Server *http.Server
+	Logger     *log.Logger
+	HTTPServer *http.Server
 }
 
-// Функция создания сервера
 func NewServer(logger *log.Logger) *Server {
-	// Создаем новый роутер
+	// Создаем роутер
 	mux := http.NewServeMux()
-	
-	// Регистрируем хендлеры
-	mux.HandleFunc("/", handlers.IndexHandler)
-	mux.HandleFunc("/upload", handlers.UploadHandler)
 
-	// Создаем и настраиваем http.Server
-	server := &http.Server{
-		Addr:           ":8080",
-		Handler:        mux,
-		ErrorLog:       logger,
-		ReadTimeout:    5 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		IdleTimeout:    15 * time.Second,
+	// Регистрация хендлеров
+	mux.HandleFunc("/", handlers.Handler)             // Регистрация основного обработчика
+	mux.HandleFunc("/upload", handlers.HandlerUpload) // Регистрация обработчика загрузки
+
+	// Создаем новый HTTP-сервер с заданными параметрами
+	httpServer := &http.Server{
+		Addr:         ":8080",
+		Handler:      mux,
+		ErrorLog:     logger,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
 	}
 
 	return &Server{
-		Logger: logger,
-		Server: server,
+		Logger:     logger,
+		HTTPServer: httpServer,
 	}
 }

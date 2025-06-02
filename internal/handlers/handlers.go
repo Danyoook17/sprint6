@@ -3,68 +3,76 @@ package handlers
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Yandex-Practicum/go1fl-sprint6-final/internal/service"
 )
 
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// Читаем содержимое файла index.html
+	filePath := "index.html"
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		http.Error(w, "Ошибка при чтении файла", http.StatusInternalServerError)
 		return
 	}
 
-	http.ServeFile(w, r, "index.html")
+	// Устанавливаем заголовок Content-Type
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Отправляем содержимое файла в ответ
+	w.Write(content)
 }
 
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
-// Парсинг 
-	err := r.ParseMultipartForm(0)
-	if err != nil {
-		http.Error(w, "Ошибка загрузки", http.StatusInternalServerError)
-		return
-	}
-// получение файла 
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "Файл не найден", http.StatusInternalServerError)
-		return
-	}
-	defer file.Close()
-// чтение файла 
-	content, err := io.ReadAll(file)
-	if err != nil {
-		http.Error(w, "Ошибка чтения файла", http.StatusInternalServerError)
-		return
-	}
+func HandlerUpload(w http.ResponseWriter, r *http.Request) {
+	// 1 парсить html-форму из файла index.html
 
-	// Конвертируем данные
-	convertedString, err := service.Convert(string(content))
-	if err != nil {
-		http.Error(w, "Ошибка конвертации", http.StatusInternalServerError)
-		return
+	if r.Method == http.MethodPost || r.Method == http.MethodGet {
+		//?? Ограничиваем размер загружаемого файла
+		err := r.ParseMultipartForm(10 << 20) // 10 MB
+		if err != nil {
+			fmt.Printf("Ошибка при разборе формы: %v", err)
+			http.Error(w, "Ошибка при разборе формы", http.StatusBadRequest)
+			return
+		}
+
+		//2 получить файл из формы
+		file, _, err := r.FormFile("myFile")
+		if err != nil {
+			fmt.Printf("Ошибка при при полученни файла: %v", err)
+			http.Error(w, "Ошибка при получении файла", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// 3 Читаем содержимое файла
+		data, err := io.ReadAll(file)
+		if err != nil {
+			http.Error(w, "Ошибка при чтении файла", http.StatusInternalServerError)
+			return
+		}
+		// 4 передать данные из файла в функцию из service
+		conv, err := service.Convert(string(data))
+		if err != nil {
+			log.Printf("error converting:%v", err)
+			http.Error(w, "Ошибка при конвертации", http.StatusInternalServerError)
+		}
+		// 5 6 создать локальный файл и записываем результат конвертации строки
+		fileName := time.Now().UTC().Format("2006-01-02T15:04:05") + filepath.Ext("output.txt")
+		err = os.WriteFile(fileName, []byte(conv), 0644)
+		if err != nil {
+			http.Error(w, "Ошибка при записи в файл", http.StatusInternalServerError)
+			return
+		}
+
+		//7 вернуть результат конвертации строки
+		fmt.Println(conv)
+	} else {
+		http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
 	}
-
-	// Создаем имя для нового файла
-	timestamp := time.Now().UTC().String()
-	extension := filepath.Ext(handler.Filename)
-	newFilename := fmt.Sprintf("%s_converted%s", timestamp, extension)
-
-	// Записываем результат в файл
-	err = ioutil.WriteFile(newFilename, []byte(convertedString), 0644)
-	if err != nil {
-		http.Error(w, "Ошибка записи файла", http.StatusInternalServerError)
-		return
-	}
-
-	// Отправляем результат
-	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprint(w, convertedString)
 }
