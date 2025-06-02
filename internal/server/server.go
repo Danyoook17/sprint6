@@ -36,3 +36,4 @@ func NewServer(logger *log.Logger) *Server {
 		HTTPServer: httpServer,
 	}
 }
+

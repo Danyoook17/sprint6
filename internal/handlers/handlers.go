@@ -63,12 +63,13 @@ func HandlerUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Ошибка при конвертации", http.StatusInternalServerError)
 		}
 		// 5 6 создать локальный файл и записываем результат конвертации строки
-		fileName := time.Now().UTC().Format("2006-01-02T15:04:05") + filepath.Ext("output.txt")
-		err = os.WriteFile(fileName, []byte(conv), 0644)
-		if err != nil {
-			http.Error(w, "Ошибка при записи в файл", http.StatusInternalServerError)
-			return
-		}
+	fileName := time.Now().UTC().Format("2006-01-02T15-04-05") + filepath.Ext("output.txt")
+	err = os.WriteFile(fileName, []byte(conv), 0644)
+	if err != nil {
+		log.Printf("Ошибка при создании и записи файла:%v\n", err)
+		http.Error(w, "Ошибка при создании и записи файла", http.StatusInternalServerError)
+		return
+	}
 
 		//7 вернуть результат конвертации строки
 		fmt.Println(conv)
