@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Yandex-Practicum/go1fl-sprint6-final/pkg/morse"
 )
 
 var morseCodeMap = map[rune]string{
@@ -67,26 +66,19 @@ func ToText(morse string) string {
 }
 
 
+
+
 func Convert(input string) (string, error) {
 	if len(input) == 0 {
 		return "", errors.New("empty string")
 	}
-
-	isMorseCode := true
+	var res string
 	for _, char := range input {
 		if !strings.ContainsAny(string(char), ".- ") {
-			isMorseCode = false
-			break
+			res = ToMorse(input)
+		} else {
+			res = ToText(input)
 		}
 	}
-
-	var result string
-
-	if isMorseCode {
-		result = morse.ToText(input)
-	} else {
-		result = morse.ToMorse(input) 
-	}
-
-	return result, nil
+	return res, nil
 }
